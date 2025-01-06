@@ -49,6 +49,13 @@ async function run() {
      * ! Doctor related api
      * -----------------------------------
      */
+
+    app.post("/doctors", async (req, res) => {
+      const data = req.body;
+      const result = await doctorCollections.insertOne(data);
+      res.send(result);
+    });
+    
     app.get("/doctors", async (req, res) => {
       const result = await doctorCollections.find().toArray();
       res.send(result);
