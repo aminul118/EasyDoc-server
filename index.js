@@ -156,9 +156,33 @@ async function run() {
     });
 
     app.get("/doctors", async (req, res) => {
-      const result = await doctorCollections.find().toArray();
+      const { sort, search } = req.query;
+      console.log(search);
+      const sortOrder = sort === "asc" ? 1 : -1;
+      const aggregate = [];
+
+      // Add sorting
+      aggregate.push({
+        $sort: {
+          rating: sortOrder,
+        },
+      });
+
+      if (search) {
+        aggregate.push({
+          $match: {
+            $or: [
+              { specialization: { $regex: search, $options: "i" } },
+              { doctorName: { $regex: search, $options: "i" } },
+            ],
+          },
+        });
+      }
+
+      const result = await doctorCollections.aggregate(aggregate).toArray();
       res.send(result);
     });
+
     app.get("/top-rated-doctors", async (req, res) => {
       const aggregate = [
         {
