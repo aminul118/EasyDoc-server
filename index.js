@@ -12,7 +12,14 @@ const port = process.env.PORT || 5000;
  * ! Middleware uses
  * -----------------------------------
  */
-app.use(cors());
+
+const corsOptions = {
+  origin: ["http://localhost:5173", "https://easy-doctor.netlify.app"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 /**
@@ -55,7 +62,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     /**
      * -----------------------------------
@@ -147,7 +154,7 @@ async function run() {
       const email = { email: data.email };
 
       const query = await doctorCollections.findOne(email);
-      if (query.email === email) {
+      if (query?.email === email) {
         return res.status(403).send({ message: "user already exits" });
       }
 
@@ -206,8 +213,39 @@ async function run() {
     });
     app.get("/doctors/:id", async (req, res) => {
       const id = req.params.id;
+      console.log(id);
       const query = { _id: new ObjectId(id) };
       const result = await doctorCollections.findOne(query);
+      res.send(result);
+    });
+
+    app.put("/doctors/:id", async (req, res) => {
+      const id = req.params.id;
+      const doc = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          doctorName: doc.doctorName,
+          specialization: doc.specialization,
+          experience: doc.experience,
+          rating: doc.rating,
+          phone: doc.phone,
+          email: doc.email,
+          location: doc.location,
+          image: doc.image,
+          details: doc.details,
+          date: doc.date,
+          time: doc.time,
+        },
+      };
+      const result = await doctorCollections.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    app.delete("/doctors/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await doctorCollections.deleteOne(query);
       res.send(result);
     });
 
@@ -261,10 +299,10 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
